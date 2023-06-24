@@ -117,32 +117,4 @@ namespace oracle
     const pricing_record empty_pr = oracle::pricing_record();
     return (*this).equal(empty_pr);
   }
-
-  // overload for pr validation for block
-  bool pricing_record::valid(cryptonote::network_type nettype, uint32_t hf_version, uint64_t bl_timestamp, uint64_t last_bl_timestamp) const 
-  {
-    if (hf_version < HF_VERSION_DJED) {
-      if (!this->empty())
-        return false;
-    }
-
-    if (this->empty())
-        return true;
-  
-    // validate the timestmap
-    if (this->timestamp > bl_timestamp + PRICING_RECORD_VALID_TIME_DIFF_FROM_BLOCK) {
-      LOG_ERROR("Pricing record timestamp is too far in the future.");
-      return false;
-    }
-
-    
-
-    if (this->timestamp <= last_bl_timestamp - PRICING_RECORD_VALID_TIME_DIFF_FROM_BLOCK) {
-      LOG_ERROR("Pricing record timestamp: " << this->timestamp << ", block timestamp: " << bl_timestamp);
-      LOG_ERROR("Pricing record timestamp is too old.");
-      return false;
-    }
-
-    return true;
-  }
 }

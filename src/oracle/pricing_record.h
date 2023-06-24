@@ -76,7 +76,6 @@ namespace oracle
       ~pricing_record() = default;
       bool equal(const pricing_record& other) const noexcept;
       bool empty() const noexcept;
-      bool valid(cryptonote::network_type nettype, uint32_t hf_version, uint64_t bl_timestamp, uint64_t last_bl_timestamp) const;
 
       pricing_record& operator=(const pricing_record& orig) noexcept;
       uint64_t operator[](const std::string& asset_type) const;
