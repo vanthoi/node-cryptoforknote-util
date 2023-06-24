@@ -33,6 +33,9 @@
 #include "storages/portable_storage.h"
 
 #include "string_tools.h"
+
+#define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
+
 namespace oracle
 {
 
