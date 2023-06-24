@@ -289,7 +289,7 @@ namespace cryptonote
 	t.vin[0].type() == typeid(txin_xasset) ? boost::get<txin_xasset>(t.vin[0]).key_offsets.size() - 1 :
 	0;
       } else if (t.blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
-        mixin = t.vin_zeph.empty() ? 0 : t.vin_zeph[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin_zeph[0]).key_offsets.size() - 1 : 0;
+        mixin = t.vin_zeph.empty() ? 0 : t.vin_zeph[0].type() == typeid(txin_to_key) ? boost::get<txin_zephyr_key>(t.vin_zeph[0]).key_offsets.size() - 1 : 0;
       } else {
         mixin = t.vin.empty() ? 0 : t.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin[0]).key_offsets.size() - 1 : 0;
       }
