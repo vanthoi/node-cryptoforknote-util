@@ -200,6 +200,7 @@ namespace cryptonote
         CHECK_AND_ASSERT_MES(in.type() == typeid(txin_to_key), false, "wrong variant type: "
           << in.type().name() << ", expected " << typeid(txin_to_key).name()
           << ", in transaction id=" << get_transaction_hash(tx));
+      }
     }
     return true;
   }
