@@ -185,18 +185,21 @@ namespace cryptonote
   {
     BOOST_FOREACH(const auto& in, tx.vin)
     {
-      if (tx.blob_type != BLOB_TYPE_CRYPTONOTE_XHV) {
-        CHECK_AND_ASSERT_MES(in.type() == typeid(txin_to_key), false, "wrong variant type: "
-          << in.type().name() << ", expected " << typeid(txin_to_key).name()
-          << ", in transaction id=" << get_transaction_hash(tx));
-      } else {
+      if (tx.blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
 	CHECK_AND_ASSERT_MES(in.type() == typeid(txin_to_key) || in.type() == typeid(txin_offshore) || in.type() == typeid(txin_onshore) || in.type() == typeid(txin_xasset), false, "wrong variant type: "
 			     << in.type().name() << ", expected " << typeid(txin_to_key).name()
 			     << "or " << typeid(txin_offshore).name()
 			     << "or " << typeid(txin_onshore).name()
 			     << "or " << typeid(txin_xasset).name()
 			     << ", in transaction id=" << get_transaction_hash(tx));
-      }
+      } else if (tx.blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
+        CHECK_AND_ASSERT_MES(in.type() == typeid(txin_zephyr_key), false, "wrong variant type: "
+          << in.type().name() << ", expected " << typeid(txin_zephyr_key).name()
+          << ", in transaction id=" << get_transaction_hash(tx));
+      } else {
+        CHECK_AND_ASSERT_MES(in.type() == typeid(txin_to_key), false, "wrong variant type: "
+          << in.type().name() << ", expected " << typeid(txin_to_key).name()
+          << ", in transaction id=" << get_transaction_hash(tx));
     }
     return true;
   }
@@ -277,15 +280,17 @@ namespace cryptonote
       const size_t inputs = t.vin.size();
       const size_t outputs = t.blob_type != BLOB_TYPE_CRYPTONOTE_XHV ? t.vout.size() : t.vout_xhv.size();
       size_t mixin;
-      if (t.blob_type != BLOB_TYPE_CRYPTONOTE_XHV) {
-        mixin = t.vin.empty() ? 0 : t.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin[0]).key_offsets.size() - 1 : 0;
-      } else {
+      if (t.blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
         mixin = t.vin.empty() ? 0 :
 	t.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin[0]).key_offsets.size() - 1 :
 	t.vin[0].type() == typeid(txin_offshore) ? boost::get<txin_offshore>(t.vin[0]).key_offsets.size() - 1 :
 	t.vin[0].type() == typeid(txin_onshore) ? boost::get<txin_onshore>(t.vin[0]).key_offsets.size() - 1 :
 	t.vin[0].type() == typeid(txin_xasset) ? boost::get<txin_xasset>(t.vin[0]).key_offsets.size() - 1 :
 	0;
+      } else if (t.blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
+        mixin = t.vin_zeph.empty() ? 0 : t.vin_zeph[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin_zeph[0]).key_offsets.size() - 1 : 0;
+      } else {
+        mixin = t.vin.empty() ? 0 : t.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin[0]).key_offsets.size() - 1 : 0;
       }
       bool r = tt.rct_signatures.p.serialize_rctsig_prunable(ba, t.rct_signatures.type, inputs, outputs, mixin);
       CHECK_AND_ASSERT_MES(r, false, "Failed to serialize rct signatures prunable");
