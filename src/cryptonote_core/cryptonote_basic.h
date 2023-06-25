@@ -16,7 +16,7 @@
 #include "serialization/binary_archive.h"
 #include "serialization/crypto.h"
 #include "serialization/pricing_record.h"
-#include "serialization/pricing_record_zeph.h"
+#include "serialization/zephyr_pricing_record.h"
 #include "serialization/keyvalue_serialization.h" // eepe named serialization
 #include "string_tools.h"
 #include "cryptonote_config.h"
@@ -27,7 +27,7 @@
 #include "ringct/rctTypes.h"
 #include "cryptonote_protocol/blobdatatype.h"
 #include "offshore/pricing_record.h"
-#include "oracle/pricing_record.h"
+#include "zephyr_oracle/pricing_record.h"
 
 
 namespace cryptonote
@@ -106,6 +106,22 @@ namespace cryptonote
     BEGIN_SERIALIZE_OBJECT()
       FIELD(key)
       FIELD(asset_type)
+    END_SERIALIZE()
+  };
+
+  // ZEPHYR
+  struct txout_zephyr_tagged_key
+  {
+    txout_zephyr_tagged_key() { }
+    txout_zephyr_tagged_key(const crypto::public_key &_key, const std::string &_asset_type, const crypto::view_tag &_view_tag) : key(_key), asset_type(_asset_type), view_tag(_view_tag) { }
+    crypto::public_key key;
+    std::string asset_type;
+    crypto::view_tag view_tag; // optimization to reduce scanning time
+
+    BEGIN_SERIALIZE_OBJECT()
+      FIELD(key)
+      FIELD(asset_type)
+      FIELD(view_tag)
     END_SERIALIZE()
   };
 
@@ -216,29 +232,13 @@ namespace cryptonote
       FIELD(k_image)
     END_SERIALIZE()
   };
-
-  struct txout_zephyr_tagged_key
-  {
-    txout_zephyr_tagged_key() { }
-    txout_zephyr_tagged_key(const crypto::public_key &_key, const std::string &_asset_type, const crypto::view_tag &_view_tag) : key(_key), asset_type(_asset_type), view_tag(_view_tag) { }
-    crypto::public_key key;
-    std::string asset_type;
-    crypto::view_tag view_tag; // optimization to reduce scanning time
-
-    BEGIN_SERIALIZE_OBJECT()
-      FIELD(key)
-      FIELD(asset_type)
-      FIELD(view_tag)
-    END_SERIALIZE()
-  };
   
-  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_to_key, txin_offshore, txin_onshore, txin_xasset> txin_v;
-
-  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_zephyr_key> txin_zeph_v;
-  typedef boost::variant<txout_to_script, txout_to_scripthash, txout_zephyr_tagged_key> txout_zeph_target_v;
+  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_to_key, txin_offshore, txin_onshore, txin_xasset, txin_zephyr_key> txin_v;
 
   typedef boost::variant<txout_to_script, txout_to_scripthash, txout_to_key, txout_to_tagged_key> txout_target_v;
   typedef boost::variant<txout_to_script, txout_to_scripthash, txout_to_key, txout_offshore, txout_xasset> txout_xhv_target_v;
+
+  typedef boost::variant<txout_to_script, txout_to_scripthash, txout_zephyr_tagged_key> txout_stablero_target_v;
 
   struct tx_out
   {
@@ -262,10 +262,10 @@ namespace cryptonote
     END_SERIALIZE()
   };
 
-  struct tx_out_zeph
+  struct tx_out_zephyr
   {
     uint64_t amount;
-    txout_zeph_target_v target;
+    txout_stablero_target_v target;
 
     BEGIN_SERIALIZE_OBJECT()
       VARINT_FIELD(amount)
@@ -293,10 +293,9 @@ namespace cryptonote
     uint64_t unlock_time;  //number of block (or time), used as a limitation like: spend this tx not early then block/time
 
     std::vector<txin_v> vin;
-    std::vector<txin_zeph_v> vin_zeph;
     std::vector<tx_out> vout;
     std::vector<tx_out_xhv> vout_xhv;
-    std::vector<tx_out_zeph> vout_zeph;
+    std::vector<tx_out_zephyr> vout_zephyr;
     //extra
     std::vector<uint8_t> extra;
     // Block height to use PR from
@@ -335,14 +334,12 @@ namespace cryptonote
       }
       if (blob_type != BLOB_TYPE_CRYPTONOTE_XHV || version < POU_TRANSACTION_VERSION)
         VARINT_FIELD(unlock_time)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH)
-        FIELD(vin_zeph)
-      else
-        FIELD(vin)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV)
+      FIELD(vin)
+
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR)
+        FIELD(vout_zephyr)
+      else if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV)
         FIELD(vout_xhv)
-      else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH)
-        FIELD(vout_zeph)
       else
         FIELD(vout)
 
@@ -355,6 +352,11 @@ namespace cryptonote
       {
         VARINT_FIELD(type)
         if (static_cast<uint16_t>(type) >= loki_type_count) return false;
+      }
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
+        VARINT_FIELD(pricing_record_height)
+        VARINT_FIELD(amount_burnt)
+        VARINT_FIELD(amount_minted)
       }
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV && version >= OFFSHORE_TRANSACTION_VERSION) {
         VARINT_FIELD(pricing_record_height)
@@ -377,10 +379,6 @@ namespace cryptonote
               return false;
           }
         }
-      } else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
-        VARINT_FIELD(pricing_record_height)
-        VARINT_FIELD(amount_burnt)
-        VARINT_FIELD(amount_minted)
       }
     END_SERIALIZE()
 
@@ -439,29 +437,22 @@ namespace cryptonote
         if (!vin.empty())
         {
           ar.begin_object();
-          bool r;
-          if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV)
-            r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout_xhv.size());
-          else if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV)
-            r = rct_signatures.serialize_rctsig_base(ar, vin_zeph.size(), vout_zeph.size());
-          else
-            r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout.size());
+          bool r = rct_signatures.serialize_rctsig_base(ar, vin.size(), blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR ? vout_zephyr.size() : blob_type != BLOB_TYPE_CRYPTONOTE_XHV ? vout.size() : vout_xhv.size());
           if (!r || !ar.stream().good()) return false;
           ar.end_object();
           if (rct_signatures.type != rct::RCTTypeNull)
           {
             ar.tag("rctsig_prunable");
             ar.begin_object();
-            if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
+            if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
+              r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout_zephyr.size(),
+                  vin[0].type() == typeid(txin_zephyr_key) ? boost::get<txin_zephyr_key>(vin[0]).key_offsets.size() - 1 : 0);
+            } else if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
               r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout_xhv.size(),
                   vin.size() > 0 && vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(vin[0]).key_offsets.size() - 1 :
                   vin.size() > 0 && vin[0].type() == typeid(txin_offshore) ? boost::get<txin_offshore>(vin[0]).key_offsets.size() - 1 :
                   vin.size() > 0 && vin[0].type() == typeid(txin_onshore) ? boost::get<txin_onshore>(vin[0]).key_offsets.size() - 1 :
-                  vin.size() > 0 && vin[0].type() == typeid(txin_xasset) ? boost::get<txin_xasset>(vin[0]).key_offsets.size() - 1 :
-         	  0);
-            } else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
-              r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin_zeph.size(), vout_zeph.size(),
-                    vin_zeph.size() > 0 && vin_zeph[0].type() == typeid(txin_zephyr_key) ? boost::get<txin_zephyr_key>(vin_zeph[0]).key_offsets.size() - 1 : 0);
+                  vin.size() > 0 && vin[0].type() == typeid(txin_xasset) ? boost::get<txin_xasset>(vin[0]).key_offsets.size() - 1 : 0);
             } else {
               r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout.size(),
                   vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(vin[0]).key_offsets.size() - 1 : 0);
@@ -495,10 +486,9 @@ namespace cryptonote
     version = 0;
     unlock_time = 0;
     vin.clear();
-    vin_zeph.clear();
     vout.clear();
     vout_xhv.clear();
-    vout_zeph.clear();
+    vout_zephyr.clear();
     extra.clear();
     signatures.clear();
     pricing_record_height = 0;
@@ -642,7 +632,7 @@ namespace cryptonote
     uint64_t nonce;
     uint64_t nonce8;
     offshore::pricing_record pricing_record;
-    oracle::pricing_record pricing_record_zeph;
+    zephyr_oracle::pricing_record zephyr_pricing_record;
     crypto::cycle cycle;
     crypto::cycle40 cycle40;
     crypto::cycle48 cycle48;
@@ -654,7 +644,7 @@ namespace cryptonote
       FIELD(prev_id)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_CUCKOO || blob_type == BLOB_TYPE_CRYPTONOTE_TUBE || blob_type == BLOB_TYPE_CRYPTONOTE_XTA) FIELD(nonce8)
       if (blob_type != BLOB_TYPE_FORKNOTE2) {
-        if (blob_type == BLOB_TYPE_AEON || blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) {
+        if (blob_type == BLOB_TYPE_AEON) {
           FIELD(nonce)
         } else {
           uint32_t nonce32;
@@ -667,7 +657,7 @@ namespace cryptonote
       if (blob_type == BLOB_TYPE_CRYPTONOTE_TUBE) FIELD(cycle40)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTA) FIELD(cycle48)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) FIELD(pricing_record)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPH) FIELD(pricing_record_zeph)
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) FIELD_N("pricing_record", zephyr_pricing_record)
 
     END_SERIALIZE()
   };
@@ -736,12 +726,6 @@ namespace cryptonote
     KV_SERIALIZE(adr)
     KV_SERIALIZE(payment_id)
     END_KV_SERIALIZE_MAP()
-  };
-
-  struct keypair
-  {
-    crypto::public_key pub;
-    crypto::secret_key sec;
   };
   //---------------------------------------------------------------
 
