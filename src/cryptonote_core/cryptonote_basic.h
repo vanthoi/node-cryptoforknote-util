@@ -233,7 +233,8 @@ namespace cryptonote
     END_SERIALIZE()
   };
   
-  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_to_key, txin_offshore, txin_onshore, txin_xasset, txin_zephyr_key> txin_v;
+  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_to_key, txin_offshore, txin_onshore, txin_xasset> txin_v;
+  typedef boost::variant<txin_gen, txin_to_script, txin_to_scripthash, txin_zephyr_key> txin_zephyr_v;
 
   typedef boost::variant<txout_to_script, txout_to_scripthash, txout_to_key, txout_to_tagged_key> txout_target_v;
   typedef boost::variant<txout_to_script, txout_to_scripthash, txout_to_key, txout_offshore, txout_xasset> txout_xhv_target_v;
@@ -293,6 +294,7 @@ namespace cryptonote
     uint64_t unlock_time;  //number of block (or time), used as a limitation like: spend this tx not early then block/time
 
     std::vector<txin_v> vin;
+    std::vector<txin_zephyr_v> vin_zephyr;
     std::vector<tx_out> vout;
     std::vector<tx_out_xhv> vout_xhv;
     std::vector<tx_out_zephyr> vout_zephyr;
@@ -334,7 +336,10 @@ namespace cryptonote
       }
       if (blob_type != BLOB_TYPE_CRYPTONOTE_XHV || version < POU_TRANSACTION_VERSION)
         VARINT_FIELD(unlock_time)
-      FIELD(vin)
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR)
+        FIELD(vin_zephyr)
+      else 
+        FIELD(vin)
 
       if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR)
         FIELD(vout_zephyr)
@@ -437,7 +442,13 @@ namespace cryptonote
         if (!vin.empty())
         {
           ar.begin_object();
-          bool r = rct_signatures.serialize_rctsig_base(ar, vin.size(), blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR ? vout_zephyr.size() : blob_type != BLOB_TYPE_CRYPTONOTE_XHV ? vout.size() : vout_xhv.size());
+          bool r;
+          if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV)
+            r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout_xhv.size());
+          else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR)
+            r = rct_signatures.serialize_rctsig_base(ar, vin_zephyr.size(), vout_zephyr.size());
+          else
+            r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout.size());
           if (!r || !ar.stream().good()) return false;
           ar.end_object();
           if (rct_signatures.type != rct::RCTTypeNull)
@@ -445,8 +456,8 @@ namespace cryptonote
             ar.tag("rctsig_prunable");
             ar.begin_object();
             if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
-              r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout_zephyr.size(),
-                  vin[0].type() == typeid(txin_zephyr_key) ? boost::get<txin_zephyr_key>(vin[0]).key_offsets.size() - 1 : 0);
+              r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin_zephyr.size(), vout_zephyr.size(),
+                  vin_zephyr[0].type() == typeid(txin_zephyr_key) ? boost::get<txin_zephyr_key>(vin_zephyr[0]).key_offsets.size() - 1 : 0);
             } else if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
               r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout_xhv.size(),
                   vin.size() > 0 && vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(vin[0]).key_offsets.size() - 1 :
@@ -486,6 +497,7 @@ namespace cryptonote
     version = 0;
     unlock_time = 0;
     vin.clear();
+    vin_zephyr.clear();
     vout.clear();
     vout_xhv.clear();
     vout_zephyr.clear();
