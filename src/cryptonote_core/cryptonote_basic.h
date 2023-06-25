@@ -439,7 +439,7 @@ namespace cryptonote
       else
       {
         ar.tag("rct_signatures");
-        if (!vin.empty())
+        if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR ? !vin_zephyr.empty() : !vin.empty())
         {
           ar.begin_object();
           bool r;
