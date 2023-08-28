@@ -247,6 +247,7 @@ namespace cryptonote
           t.vin[0].type() == typeid(txin_offshore) ? boost::get<txin_offshore>(t.vin[0]).key_offsets.size() - 1 :
           t.vin[0].type() == typeid(txin_onshore) ? boost::get<txin_onshore>(t.vin[0]).key_offsets.size() - 1 :
           t.vin[0].type() == typeid(txin_xasset) ? boost::get<txin_xasset>(t.vin[0]).key_offsets.size() - 1 :
+          t.vin[0].type() == typeid(txin_haven_key) ? boost::get<txin_haven_key>(t.vin[0]).key_offsets.size() - 1 :
           0;
       } else {
         mixin = t.vin.empty() ? 0 : t.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(t.vin[0]).key_offsets.size() - 1 : 0;
@@ -370,7 +371,7 @@ namespace cryptonote
     ss << b_blob;
     binary_archive<false> ba(ss);
     bool r = ::serialization::serialize(ba, b);
-    CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob");
+    CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob 1");
     return true;
   }
   //---------------------------------------------------------------
