@@ -176,7 +176,7 @@ function generateOutputTransactions(rpcData, poolAddress) {
   let txOutputBuffers = [];
 
   if (rpcData.coinbasedevreward) {
-    const rewards = createOutputTransaction(rpcData.coinbasedevreward.value, rpcData.coinbasedevreward.address, rewardToPool, reward, txOutputBuffers);
+    const rewards = createOutputTransaction(rpcData.coinbasedevreward.value, rpcData.coinbasedevreward.address, rewardToPool, reward, txOutputBuffers, rpcData.coinbasedevreward.scriptpubkey);
     reward        = rewards.reward;
     rewardToPool  = rewards.rewardToPool;
   }
