@@ -232,3 +232,9 @@ module.exports.constructNewRtmBlob = function(blockTemplate, nonceBuff) {
   nonceBuff.copy(blockTemplate, 76, 0, 4);
   return blockTemplate;
 };
+
+module.exports.constructNewKcnBlob = function(blockTemplate, nonceBuff) {
+  update_merkle_root_hash(80, false, blockTemplate, blockTemplate);
+  nonceBuff.copy(blockTemplate, 76, 0, 4);
+  return blockTemplate;
+};
