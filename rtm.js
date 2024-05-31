@@ -149,7 +149,10 @@ function getTransactionBuffers(txs) {
 }
 
 function addressToScript(addr) {
-  const decoded = base58.decode(addr);
+  let decoded;
+  try {
+    decoded = base58.decode(addr);
+  } catch(err) {}
   if (!decoded || decoded.length != 25) {
     const decoded2 = Buffer.from(bech32.bech32.fromWords(bech32.bech32.decode(addr).words.slice(1)));
     if (decoded2.length != 20) throw new Error('Invalid address ' + addr);
@@ -176,7 +179,7 @@ function generateOutputTransactions(rpcData, poolAddress) {
   let txOutputBuffers = [];
 
   if (rpcData.coinbasedevreward) {
-    const rewards = createOutputTransaction(rpcData.coinbasedevreward.value, rpcData.coinbasedevreward.address, rewardToPool, reward, txOutputBuffers, rpcData.coinbasedevreward.scriptpubkey);
+    const rewards = createOutputTransaction(rpcData.coinbasedevreward.value, rpcData.coinbasedevreward.address, rewardToPool, reward, txOutputBuffers, Buffer.from(rpcData.coinbasedevreward.scriptpubkey, 'hex'));
     reward        = rewards.reward;
     rewardToPool  = rewards.rewardToPool;
   }
