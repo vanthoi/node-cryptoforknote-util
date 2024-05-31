@@ -175,6 +175,12 @@ function generateOutputTransactions(rpcData, poolAddress) {
   let rewardToPool = reward;
   let txOutputBuffers = [];
 
+  if (rpcData.coinbasedevreward) {
+    const rewards = createOutputTransaction(rpcData.coinbasedevreward.value, rpcData.coinbasedevreward.address, rewardToPool, reward, txOutputBuffers);
+    reward        = rewards.reward;
+    rewardToPool  = rewards.rewardToPool;
+  }
+
   if (rpcData.smartnode) {
     if (rpcData.smartnode.payee) {
       const rewards = createOutputTransaction(rpcData.smartnode.amount, rpcData.smartnode.payee, rewardToPool, reward, txOutputBuffers);
