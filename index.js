@@ -221,6 +221,12 @@ module.exports.convertRtmBlob = function(blobBuffer) {
   return header;
 };
 
+module.exports.convertKcnBlob = function(blobBuffer) {
+  let header = blobBuffer.slice(0, 80);
+  update_merkle_root_hash(80, false, blobBuffer, header);
+  return header;
+};
+
 module.exports.constructNewRtmBlob = function(blockTemplate, nonceBuff) {
   update_merkle_root_hash(80, true, blockTemplate, blockTemplate);
   nonceBuff.copy(blockTemplate, 76, 0, 4);
