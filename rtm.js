@@ -229,7 +229,7 @@ function generateTransactionOutputs(rpcData, poolAddress, is_witness) {
 
 module.exports.RtmBlockTemplate = function(rpcData, poolAddress) {
   const extraNoncePlaceholderLength = 17;
-  const coinbaseVersion = rpcData.coinbaseaux.flags ? Buffer.concat([packUInt16LE(3), packUInt16LE(5)]) : Buffer.concat([packUInt16LE(1), packUInt16LE(0)]);
+  const coinbaseVersion = rpcData.coinbasedevreward ? Buffer.concat([packUInt16LE(1), packUInt16LE(0)]) : Buffer.concat([packUInt16LE(3), packUInt16LE(5)]);
 
   const scriptSigPart1 = Buffer.concat([
     serializeNumber(rpcData.height),
