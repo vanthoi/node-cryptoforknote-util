@@ -174,7 +174,7 @@ function createTransactionOutput(amount, payee, rewardToPool, reward, txOutputBu
 }
 
 function generateTransactionOutputs(rpcData, poolAddress, is_witness) {
-  let reward       = rpcData.coinbasevalue;
+  let reward       = rpcData.coinbasevalue + (rpcData.coinbasedevreward ? rpcData.coinbasedevreward : 0);
   let rewardToPool = reward;
   let txOutputBuffers = [];
 
