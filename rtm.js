@@ -240,7 +240,7 @@ module.exports.RtmBlockTemplate = function(rpcData, poolAddress) {
 
   const scriptSigPart2 = serializeString('/nodeStratum/');
 
-  const is_witness = false; //rpcData.default_witness_commitment !== undefined;
+  const is_witness = rpcData.default_witness_commitment !== undefined;
 
   const blob1 = Buffer.concat([
     coinbaseVersion,

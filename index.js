@@ -66,7 +66,7 @@ function transaction_hash3(transaction, forWitness) {
 
 function getMerkleRoot(transactions, transaction_hash_func) {
   if (transactions.length === 0) return Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')
-  const forWitness = txesHaveWitnessCommit(transactions);
+  const forWitness = false;//txesHaveWitnessCommit(transactions);
   const hashes = transactions.map(transaction => transaction_hash_func(transaction, forWitness));
   const rootHash = fastMerkleRoot(hashes, hash256);
   return forWitness ? hash256_3(Buffer.concat([rootHash, transactions[0].ins[0].witness[0]])) : rootHash;
