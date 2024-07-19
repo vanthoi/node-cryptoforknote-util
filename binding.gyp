@@ -7,6 +7,7 @@
                 "src/cryptonote_core/cryptonote_format_utils.cpp",
                 "src/offshore/pricing_record.cpp",
                 "src/zephyr_oracle/pricing_record.cpp",
+                "src/salvium_oracle/pricing_record.cpp",
                 "src/crypto/tree-hash.c",
                 "src/crypto/crypto.cpp",
                 "src/crypto/crypto-ops.c",

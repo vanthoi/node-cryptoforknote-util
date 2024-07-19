@@ -28,6 +28,7 @@
 #include "cryptonote_protocol/blobdatatype.h"
 #include "offshore/pricing_record.h"
 #include "zephyr_oracle/pricing_record.h"
+#include "salvium_oracle/pricing_record.h"
 
 
 namespace cryptonote
@@ -1051,6 +1052,7 @@ namespace cryptonote
     uint64_t nonce8;
     offshore::pricing_record pricing_record;
     zephyr_oracle::pricing_record zephyr_pricing_record;
+    salvium_oracle::pricing_record salvium_pricing_record;
     crypto::cycle cycle;
     crypto::cycle40 cycle40;
     crypto::cycle48 cycle48;
@@ -1075,8 +1077,9 @@ namespace cryptonote
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTNC || blob_type == BLOB_TYPE_CRYPTONOTE_CUCKOO) FIELD(cycle)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_TUBE) FIELD(cycle40)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTA) FIELD(cycle48)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV || blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) FIELD(pricing_record)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) FIELD(pricing_record)
+      else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) FIELD(salvium_pricing_record)
+      else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
         if (major_version >= 4)
         {
           FIELD_N("pricing_record", zephyr_pricing_record)
