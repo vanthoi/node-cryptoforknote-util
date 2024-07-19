@@ -223,81 +223,11 @@ namespace salvium_oracle
     return (*this).equal(empty_pr);
   }
 
-  bool pricing_record::verifySignature(const std::string& public_key) const
-  {
-    CHECK_AND_ASSERT_THROW_MES(!public_key.empty(), "Pricing record verification failed. NULL public key. PK Size: " << public_key.size());
-
-    // extract the key
-    EVP_PKEY* pubkey;
-    BIO* bio = BIO_new_mem_buf(public_key.c_str(), public_key.size());
-    if (!bio) {
-      return false;
-    }
-    pubkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
-    BIO_free(bio);
-    CHECK_AND_ASSERT_THROW_MES(pubkey != NULL, "Pricing record verification failed. NULL public key.");
-
-    // Build the JSON string, so that we can verify the signature
-    std::ostringstream oss;
-    oss << "{\"pr_version\":" << pr_version;
-    oss << ",\"height\":" << height;
-    oss << ",\"supply\":{\"SAL\":" << supply.sal <<",\"VSD\":" << supply.vsd << "}";
-    oss << ",\"assets\":[";
-    bool first = true;
-    for (const auto& asset: assets) {
-      if (first)
-        first=false;
-      else
-        oss << ",";
-      oss << "{\"asset_type\":\"" << asset.asset_type << "\",\"spot_price\":" << asset.spot_price << ",\"ma_price\":" << asset.ma_price << "}";
-    }
-    oss << "]";
-    oss << ",\"timestamp\":" << timestamp;
-    oss << "}";
-    std::string message = oss.str();
-
-    // Create a verify digest from the message
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
-    int ret = 0;
-    if (ctx) {
-      ret = EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, pubkey);
-      if (ret == 1) {
-        ret = EVP_DigestVerifyUpdate(ctx, message.data(), message.length());
-        if (ret == 1) {
-          ret = EVP_DigestVerifyFinal(ctx, (const unsigned char *)signature.data(), signature.size());
-        }
-      }
-    }
-
-    // Cleanup the context we created
-    EVP_MD_CTX_destroy(ctx);
-    // Cleanup the openssl stuff
-    EVP_PKEY_free(pubkey);
-
-    if (ret == 1)
-      return true;
-
-    // Get the errors from OpenSSL
-    ERR_print_errors_fp (stderr);
-
-    return false;
-  }
-
   // overload for pr validation for block
-  bool pricing_record::valid(cryptonote::network_type nettype, uint32_t hf_version, uint64_t bl_timestamp, uint64_t last_bl_timestamp) const 
+  bool pricing_record::valid(uint32_t hf_version, uint64_t bl_timestamp, uint64_t last_bl_timestamp) const 
   {
-    if (hf_version < HF_VERSION_SLIPPAGE_YIELD) {
-      if (!this->empty())
-        return false;
-    }
-
     if (this->empty())
         return true;
-
-    if (!verifySignature(get_config(nettype).ORACLE_PUBLIC_KEY)) {
-      LOG_ERROR("Invalid pricing record signature.");
-      return false;
-    }
 
     // validate the timestmap
     if (this->timestamp > bl_timestamp + PRICING_RECORD_VALID_TIME_DIFF_FROM_BLOCK) {

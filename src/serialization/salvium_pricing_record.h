@@ -165,4 +165,4 @@ bool do_serialize(Archive<true> &ar, salvium_oracle::pricing_record &pr, uint8_t
 
 //BLOB_SERIALIZER(salvium_oracle::supply_data);
 //BLOB_SERIALIZER(salvium_oracle::asset_data);
-//BLOB_SERIALIZER(salvium_oracle::pricing_record);
+BLOB_SERIALIZER(salvium_oracle::pricing_record);
