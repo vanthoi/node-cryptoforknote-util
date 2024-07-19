@@ -17,6 +17,7 @@
 #include "serialization/crypto.h"
 #include "serialization/pricing_record.h"
 #include "serialization/zephyr_pricing_record.h"
+#include "serialization/salvium_pricing_record.h"
 #include "serialization/keyvalue_serialization.h" // eepe named serialization
 #include "string_tools.h"
 #include "cryptonote_config.h"
