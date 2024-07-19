@@ -17,7 +17,6 @@
 #include "serialization/crypto.h"
 #include "serialization/pricing_record.h"
 #include "serialization/zephyr_pricing_record.h"
-#include "serialization/salvium_pricing_record.h"
 #include "serialization/keyvalue_serialization.h" // eepe named serialization
 #include "string_tools.h"
 #include "cryptonote_config.h"
@@ -1078,9 +1077,11 @@ namespace cryptonote
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTNC || blob_type == BLOB_TYPE_CRYPTONOTE_CUCKOO) FIELD(cycle)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_TUBE) FIELD(cycle40)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTA) FIELD(cycle48)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) FIELD(pricing_record)
-      else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) FIELD(salvium_pricing_record)
-      else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
+        FIELD(pricing_record)
+      } else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) {
+        FIELD(salvium_pricing_record)
+      } else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
         if (major_version >= 4)
         {
           FIELD_N("pricing_record", zephyr_pricing_record)
