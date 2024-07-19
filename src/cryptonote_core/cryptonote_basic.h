@@ -727,15 +727,15 @@ namespace cryptonote
       } else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) {
 
         VARINT_FIELD(version)
-        if(version == 0 || CURRENT_TRANSACTION_VERSION < version) return false;
+        //if(version == 0 || CURRENT_TRANSACTION_VERSION < version) return false;
         VARINT_FIELD(unlock_time)
         FIELD(vin_salvium)
         FIELD(vout_salvium)
         FIELD(extra)
         VARINT_FIELD(tx_type)
-        if (type != cryptonote::salvium_transaction_type::PROTOCOL) {
+        if (tx_type != cryptonote::salvium_transaction_type::PROTOCOL) {
           VARINT_FIELD(amount_burnt)
-          if (type != cryptonote::salvium_transaction_type::MINER) {
+          if (tx_type != cryptonote::salvium_transaction_type::MINER) {
             FIELD(return_address)
             FIELD(return_pubkey)
             FIELD(source_asset_type)
@@ -836,7 +836,7 @@ namespace cryptonote
       else
       {
         ar.tag("rct_signatures");
-        if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR ? !vin_zephyr.empty() : !vin.empty())
+        if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM ? !vin_salvium.empty() : (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR ? !vin_zephyr.empty() : !vin.empty()))
         {
           ar.begin_object();
           bool r;
@@ -844,6 +844,8 @@ namespace cryptonote
             r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout_xhv.size());
           else if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR)
             r = rct_signatures.serialize_rctsig_base(ar, vin_zephyr.size(), vout_zephyr.size());
+          else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM)
+            r = rct_signatures.serialize_rctsig_base(ar, vin_salvium.size(), vout_salvium.size());
           else
             r = rct_signatures.serialize_rctsig_base(ar, vin.size(), vout.size());
           if (!r || !ar.stream().good()) return false;
@@ -855,6 +857,9 @@ namespace cryptonote
             if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
               r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin_zephyr.size(), vout_zephyr.size(),
                   vin_zephyr[0].type() == typeid(txin_zephyr_key) ? boost::get<txin_zephyr_key>(vin_zephyr[0]).key_offsets.size() - 1 : 0);
+            } else if (blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) {
+              r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin_salvium.size(), vout_salvium.size(),
+                  vin_salvium[0].type() == typeid(txin_salvium_key) ? boost::get<txin_salvium_key>(vin_salvium[0]).key_offsets.size() - 1 : 0);
             } else if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV) {
               r = rct_signatures.p.serialize_rctsig_prunable(ar, rct_signatures.type, vin.size(), vout_xhv.size(),
                   vin.size() > 0 && vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(vin[0]).key_offsets.size() - 1 :
