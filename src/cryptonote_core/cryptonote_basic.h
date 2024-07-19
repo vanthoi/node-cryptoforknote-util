@@ -1075,7 +1075,7 @@ namespace cryptonote
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTNC || blob_type == BLOB_TYPE_CRYPTONOTE_CUCKOO) FIELD(cycle)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_TUBE) FIELD(cycle40)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_XTA) FIELD(cycle48)
-      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV || blob_type == BLOB_TYPE_CRYPTONOTE_SAL) FIELD(pricing_record)
+      if (blob_type == BLOB_TYPE_CRYPTONOTE_XHV || blob_type == BLOB_TYPE_CRYPTONOTE_SALVIUM) FIELD(pricing_record)
       if (blob_type == BLOB_TYPE_CRYPTONOTE_ZEPHYR) {
         if (major_version >= 4)
         {
