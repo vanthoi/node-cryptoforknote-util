@@ -8,7 +8,7 @@ const b2 = u.convert_blob(b, 15);
 
 if (b2.toString('hex') === '010194a5ebb406f613c4e7514facf3e5b9923c885357b53f2b02f8e17f9721371296b99113035f00000000ac81ca3e7bc9369e63563923187d2cfdb42eac839c7fe24e6d5d0080c96d758f02') {
   console.log('PASSED');
-else {
+} else {
   console.log('FAILED: ' + b2);
   process.exit(1);
 }
