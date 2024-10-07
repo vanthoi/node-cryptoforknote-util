@@ -16,4 +16,5 @@ jobs:
       - name: Test
         run: |
           npm install
+          find .
           node_modules/cryptoforknote-util/tests/run.sh
