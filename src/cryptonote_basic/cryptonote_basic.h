@@ -740,7 +740,7 @@ namespace cryptonote
         if (tx_type != cryptonote::salvium_transaction_type::PROTOCOL) {
           VARINT_FIELD(amount_burnt)
           if (tx_type != cryptonote::salvium_transaction_type::MINER) {
-            if (type == cryptonote::transaction_type::TRANSFER && version >= TRANSACTION_VERSION_N_OUTS) {
+            if (type == cryptonote::salvium_transaction_type::TRANSFER && version >= TRANSACTION_VERSION_N_OUTS) {
               FIELD(return_address_list)
               FIELD(return_address_change_mask)
             } else {
@@ -924,7 +924,7 @@ namespace cryptonote
     output_unlock_times.clear();
     collateral_indices.clear();
     // SAL
-    tx_type = cryptonote::transaction_type::UNSET;
+    tx_type = cryptonote::salvium_transaction_type::UNSET;
     return_address = crypto::null_pkey;
     return_address_list.clear();
     return_address_change_mask.clear();
