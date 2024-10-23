@@ -925,10 +925,10 @@ namespace cryptonote
     collateral_indices.clear();
     // SAL
     tx_type = cryptonote::salvium_transaction_type::UNSET;
-    return_address = crypto::null_pkey;
+    return_address = cryptonote::null_pkey;
     return_address_list.clear();
     return_address_change_mask.clear();
-    return_pubkey = crypto::null_pkey;
+    return_pubkey = cryptonote::null_pkey;
     source_asset_type.clear();
     destination_asset_type.clear();
     amount_slippage_limit = 0;
