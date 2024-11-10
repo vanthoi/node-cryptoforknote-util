@@ -22,18 +22,14 @@ const size_t MM_NONCE_SIZE = 1 + 2 + sizeof(crypto::hash);
 
 blobdata uint64be_to_blob(uint64_t num) {
     blobdata res = "        ";
-    res[0] = num >> 88 & 0xff;
-    res[1] = num >> 80 & 0xff;
-    res[2] = num >> 72 & 0xff;
-    res[3] = num >> 64 & 0xff;
-    res[4] = num >> 56 & 0xff;
-    res[5] = num >> 48 & 0xff;
-    res[6] = num >> 40 & 0xff;
-    res[7] = num >> 32 & 0xff;
-    res[8] = num >> 24 & 0xff;
-    res[9] = num >> 16 & 0xff;
-    res[10] = num >> 8  & 0xff;
-    res[11] = num       & 0xff;
+    res[0] = num >> 56 & 0xff;
+    res[1] = num >> 48 & 0xff;
+    res[2] = num >> 40 & 0xff;
+    res[3] = num >> 32 & 0xff;
+    res[4] = num >> 24 & 0xff;
+    res[5] = num >> 16 & 0xff;
+    res[6] = num >> 8  & 0xff;
+    res[7] = num       & 0xff;
     return res;
 }
                              

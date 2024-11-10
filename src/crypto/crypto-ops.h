@@ -1,8 +1,26 @@
-// Copyright (c) 2012-2013 The Cryptonote developers
-// Distributed under the MIT/X11 software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2016-2024, The Karbo Developers , The Dogemone Developers
+//
+// This file is part of Dogemone.
+//
+// Dogemone is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Dogemone is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Dogemone.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* From fe.h */
 
@@ -90,6 +108,10 @@ void ge_p3_tobytes(unsigned char *, const ge_p3 *);
 extern const ge_precomp ge_base[32][8];
 void ge_scalarmult_base(ge_p3 *, const unsigned char *);
 
+/* From ge_sub.c */
+
+void ge_sub(ge_p1p1 *, const ge_p3 *, const ge_cached *);
+
 /* From ge_tobytes.c */
 
 void ge_tobytes(unsigned char *, const ge_p2 *);
@@ -115,5 +137,10 @@ void sc_reduce32(unsigned char *);
 void sc_add(unsigned char *, const unsigned char *, const unsigned char *);
 void sc_sub(unsigned char *, const unsigned char *, const unsigned char *);
 void sc_mulsub(unsigned char *, const unsigned char *, const unsigned char *, const unsigned char *);
+void sc_mul(unsigned char *, const unsigned char *, const unsigned char *);
 int sc_check(const unsigned char *);
 int sc_isnonzero(const unsigned char *); /* Doesn't normalize */
+
+#if defined(__cplusplus)
+}
+#endif
